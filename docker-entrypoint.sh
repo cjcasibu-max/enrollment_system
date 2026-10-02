@@ -21,9 +21,13 @@ chown -R www-data:www-data /var/www/html/uploads /var/www/html/private_uploads
 chmod -R 775 /var/www/html/uploads /var/www/html/private_uploads
 
 # Auto-initialize database on startup if DB_AUTO_INIT=true
+# Run in BACKGROUND so Apache starts immediately and passes health checks.
+# The seed completes within ~60s after container becomes live.
 if [ "${DB_AUTO_INIT}" = "true" ]; then
-    echo "==> DB_AUTO_INIT is enabled. Running database setup..."
-    php /var/www/html/database/setup_cloud_db.php || echo "[!] Database setup encountered an error. Continuing startup..."
+    echo "==> DB_AUTO_INIT is enabled. Running database setup in background..."
+    (php /var/www/html/database/setup_cloud_db.php >> /var/log/apache2/db_setup.log 2>&1 \
+        && echo "[DB_SETUP] Completed successfully." >> /var/log/apache2/db_setup.log \
+        || echo "[DB_SETUP] Encountered an error." >> /var/log/apache2/db_setup.log) &
 fi
 
 echo "==> Starting Apache in foreground..."
