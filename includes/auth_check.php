@@ -29,6 +29,18 @@ function startSecureSession(): void {
         'httponly' => true,       // JS cannot read the cookie
         'samesite' => 'Lax',      // Blocks cross-site POST CSRF
     ]);
+
+    // On cloud/Render: use DB-backed sessions so they survive container restarts.
+    // Falls back to file sessions gracefully if the DB is unavailable.
+    if (!$isLocalhost) {
+        $suppressDbDie = true; // Prevent database.php from calling die() if DB is unavailable here
+        @require_once __DIR__ . '/../config/database.php';
+        if (isset($pdo) && $pdo instanceof PDO) {
+            require_once __DIR__ . '/session_handler.php';
+            registerDbSessionHandler($pdo);
+        }
+    }
+
     session_start();
 }
 

@@ -10,7 +10,7 @@ require_once '../includes/auth_check.php';
 // Check if request is POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $_SESSION['flash_error'] = "Invalid request method.";
-    header("Location: ../auth/login");
+    header("Location: " . resolveAppUrl('auth/login'));
     exit;
 }
 
@@ -27,7 +27,7 @@ function redirectWithRegisterError($errorMsg, $firstName, $lastName, $contactNum
         'username' => $username,
         'email' => $email
     ];
-    header("Location: ../auth/login?mode=register");
+    header("Location: " . resolveAppUrl('auth/login') . "?mode=register");
     exit;
 }
 
@@ -37,7 +37,7 @@ function redirectWithLoginError($errorMsg, $usernameInput) {
     $_SESSION['form_data'] = [
         'username' => $usernameInput
     ];
-    header("Location: ../auth/login");
+    header("Location: " . resolveAppUrl('auth/login'));
     exit;
 }
 
@@ -281,7 +281,7 @@ if ($action === 'register') {
         $_SESSION['enrollment_status'] = 'draft';
 
         $_SESSION['flash_success'] = "Registration successful! Your account is ready to start an application.";
-        header("Location: ../enrollee/dashboard");
+        header("Location: " . resolveAppUrl('enrollee/dashboard'));
         exit;
 
     } catch (\PDOException $e) {
@@ -374,15 +374,15 @@ if ($action === 'register') {
         
         // Route dashboard
         $dashboards = [
-            'admin'     => '../admin/dashboard',
-            'registrar' => '../registrar/dashboard',
-            'cashier'   => '../cashier/dashboard',
-            'teacher'   => '../teacher/dashboard',
-            'student'   => '../student/dashboard',
-            'enrollee'  => '../enrollee/dashboard'
+            'admin'     => 'admin/dashboard',
+            'registrar' => 'registrar/dashboard',
+            'cashier'   => 'cashier/dashboard',
+            'teacher'   => 'teacher/dashboard',
+            'student'   => 'student/dashboard',
+            'enrollee'  => 'enrollee/dashboard'
         ];
         
-        $redirectTarget = isset($dashboards[$user['role']]) ? $dashboards[$user['role']] : '../index';
+        $redirectTarget = resolveAppUrl($dashboards[$user['role']] ?? 'index');
         
         $_SESSION['flash_success'] = "Welcome back, " . htmlspecialchars($user['username']) . "!";
         header("Location: " . $redirectTarget);
