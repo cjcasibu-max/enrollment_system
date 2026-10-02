@@ -11,7 +11,7 @@ services:
       - key: DB_HOST
         sync: false
       - key: DB_PORT
-        value: "3306"
+        value: "4000"
       - key: DB_NAME
         sync: false
       - key: DB_USER
@@ -19,7 +19,9 @@ services:
       - key: DB_PASS
         sync: false
       - key: DB_SSL
-        value: "false"
+        value: "true"
+      - key: APP_DEBUG
+        value: "true"
       - key: DB_AUTO_INIT
         value: "true"
       - key: SEED_DEMO_DATA

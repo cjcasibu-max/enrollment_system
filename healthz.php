@@ -11,6 +11,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
 $dbConnected = false;
 $dbMessage = 'unconfigured';
+$suppressDbDie = true;
 
 try {
     require_once __DIR__ . '/config/database.php';
@@ -23,8 +24,6 @@ try {
     $dbMessage = 'error: ' . $e->getMessage();
 }
 
-// If database environment variables are not yet configured, still return 200
-// so that the initial container deployment succeeds and allows configuring environment variables.
 $isConfigured = (getenv('DB_HOST') !== false || getenv('DATABASE_URL') !== false || getenv('MYSQL_URL') !== false);
 $isHealthy = $dbConnected || !$isConfigured;
 
@@ -33,6 +32,13 @@ echo json_encode([
     'status'    => $isHealthy ? 'ok' : 'degraded',
     'app'       => 'NCST Maritime Academy Enrollment System',
     'database'  => $dbMessage,
+    'details'   => [
+        'host' => getenv('DB_HOST') ?: 'not set',
+        'port' => getenv('DB_PORT') ?: '3306',
+        'user' => getenv('DB_USER') ?: 'not set',
+        'database' => getenv('DB_NAME') ?: 'not set',
+        'ssl' => getenv('DB_SSL') ?: 'false',
+    ],
     'timestamp' => date('c'),
 ], JSON_PRETTY_PRINT);
 exit;
