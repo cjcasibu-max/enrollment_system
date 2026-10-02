@@ -69,11 +69,34 @@ try {
     
     $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
     echo "5. Tables in database '{$db}' (" . count($tables) . " tables found):\n";
-    foreach (array_slice($tables, 0, 20) as $t) {
+    foreach (array_slice($tables, 0, 15) as $t) {
         echo "   - {$t}\n";
     }
-    if (count($tables) === 0) {
-        echo "   (No tables yet. If DB_AUTO_INIT=true, restart service or run database/setup_cloud_db.php)\n";
+    
+    // Check record counts
+    $userCount = 0;
+    $termCount = 0;
+    $subjCount = 0;
+    if (in_array('users', $tables, true)) {
+        $userCount = (int)$pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    }
+    if (in_array('academic_terms', $tables, true)) {
+        $termCount = (int)$pdo->query("SELECT COUNT(*) FROM academic_terms")->fetchColumn();
+    }
+    if (in_array('subjects', $tables, true)) {
+        $subjCount = (int)$pdo->query("SELECT COUNT(*) FROM subjects")->fetchColumn();
+    }
+    echo "\n6. Record Counts:\n";
+    echo "   Users          : {$userCount}\n";
+    echo "   Academic Terms : {$termCount}\n";
+    echo "   Subjects       : {$subjCount}\n";
+
+    if (isset($_GET['action']) && $_GET['action'] === 'seed') {
+        echo "\n[*] Running database/setup_cloud_db.php directly...\n";
+        require_once __DIR__ . '/database/setup_cloud_db.php';
+    } elseif ($userCount === 0) {
+        echo "\n[TIP] Database is connected! To seed curriculum, subjects, and all demo accounts,\n";
+        echo "      open: https://enrollment-system-0bz0.onrender.com/db_test.php?action=seed\n";
     }
 } catch (Throwable $e) {
     echo "   [ERROR] PDO connection failed:\n";
