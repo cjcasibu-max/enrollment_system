@@ -60,6 +60,7 @@ RewriteRule ^teacher/gradebook(?:\.php)?/?$ teacher/lms_grades [R=302,L,NC,QSA]
 RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$ [NC]
 RewriteCond %{THE_REQUEST} \s/+[^\s?]+\.php(?:[?\s]) [NC]
 RewriteCond %{REQUEST_URI} !/(?:includes|config|database|scratch|tests|private_uploads|uploads)(?:/|$) [NC]
+RewriteCond %{REQUEST_URI} !^/(?:healthz|db_test)(?:\.php)?$ [NC]
 RewriteCond %{REQUEST_URI} ^(.*?)/([^/]+)\.php$ [NC]
 RewriteRule ^ %1/%2 [R=301,L,NE]
 

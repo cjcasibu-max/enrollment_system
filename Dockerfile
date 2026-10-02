@@ -17,8 +17,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Enable Apache modules required by .htaccess
 RUN a2enmod rewrite headers
 
-# Allow .htaccess overrides in Apache document root
-RUN echo '<Directory /var/www/html/>\n\
+# Allow .htaccess overrides in Apache document root and disable internal port leaks
+RUN echo 'ServerName localhost\n\
+UseCanonicalName Off\n\
+UseCanonicalPhysicalPort Off\n\
+<Directory /var/www/html/>\n\
     Options -Indexes +FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
