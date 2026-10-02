@@ -38,3 +38,6 @@ test_curr_query.php
 
 # Local Demo Credentials (DO NOT COMMIT OR DEPLOY)
 database/DEMO_CREDENTIALS.md
+
+# Scratch directory
+scratch/
