@@ -89,7 +89,36 @@ try {
         echo "[*] Subjects already populated ({$subjCount} subjects found).\n";
     }
 
-    // 4. Seed demo accounts & LMS demo data if requested or if no users exist
+    // 3b. Ensure an active academic term exists (required by seed_lms_demo.php)
+    $termCount = (int)$pdo->query("SELECT COUNT(*) FROM academic_terms WHERE is_active = 1")->fetchColumn();
+    if ($termCount === 0) {
+        echo "[*] No active academic term found. Creating default term...\n";
+        $pdo->exec("
+            INSERT INTO academic_terms (school_year, semester, is_active, start_date, end_date)
+            VALUES ('2024-2025', '1st', 1, '2024-08-01', '2024-12-31')
+            ON DUPLICATE KEY UPDATE is_active = 1
+        ");
+        echo "    -> Default academic term created.\n";
+    } else {
+        echo "[*] Active academic term found.\n";
+    }
+
+    // 3c. Ensure BSMT and BSMarE programs exist (required by seed_lms_demo.php)
+    $progCount = (int)$pdo->query("SELECT COUNT(*) FROM programs WHERE program_code IN ('BSMT','BSMarE')")->fetchColumn();
+    if ($progCount < 2) {
+        echo "[*] Programs missing. Inserting BSMT and BSMarE...\n";
+        $pdo->exec("
+            INSERT IGNORE INTO programs (program_code, program_name)
+            VALUES
+                ('BSMT',   'Bachelor of Science in Marine Transportation'),
+                ('BSMarE', 'Bachelor of Science in Marine Engineering')
+        ");
+        echo "    -> Programs seeded.\n";
+    } else {
+        echo "[*] Programs already exist.\n";
+    }
+
+    // 4. Seed demo accounts & LMS demo data
     $seedDemo = false;
     if ($isCli) {
         $argvList = $argv ?? [];
@@ -98,8 +127,9 @@ try {
         $seedDemo = (isset($_GET['seed_demo']) && $_GET['seed_demo'] === '1') || (getenv('SEED_DEMO_DATA') === 'true');
     }
 
-    $userCount = (int)$pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
-    if ($userCount === 0 || $seedDemo) {
+    // Only re-seed demo users if they are missing (prevents cleanup loop on every deploy)
+    $demoUserCount = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE username LIKE 'demo_%'")->fetchColumn();
+    if ($demoUserCount === 0 || $seedDemo) {
         echo "[*] Seeding demo accounts and LMS data...\n";
         $seedLms = __DIR__ . '/seed_lms_demo.php';
         if (file_exists($seedLms)) {
@@ -112,7 +142,7 @@ try {
             echo "    -> Demo accounts and LMS data seeded successfully.\n";
         }
     } else {
-        echo "[*] Users table already has {$userCount} accounts.\n";
+        echo "[*] Demo users already exist ({$demoUserCount} demo accounts found). Skipping re-seed.\n";
     }
 
     echo "\n[✓] Database setup completed successfully!\n";
