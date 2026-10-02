@@ -1,0 +1,70 @@
+# Clean URLs for browser-facing PHP pages.
+# RewriteBase is intentionally absent: Apache derives the correct base from
+# the .htaccess file's own directory, so this works under any folder name
+# on localhost (e.g. /enrollment_system-main/) and on the live domain root
+# without any host-detection logic or hardcoded path.
+RewriteEngine On
+
+# Keep deployed application traffic on HTTPS, but do not force local
+# development requests onto XAMPP's untrusted certificate.
+# RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP_HOST} !^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$ [NC]
+#RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L,NE]
+
+# Do not expose directory contents or server-side implementation files.
+Options -Indexes
+RewriteRule ^(?:\.git|config|database|includes|private_uploads|scratch|tests|uploads)(?:/|$) - [F,L,NC]
+RewriteRule ^(?:\.env|.*\.(?:bak|conf|dist|ini|log|old|orig|sql|sqlite|swp|yml|yaml))$ - [F,L,NC]
+
+<FilesMatch "^\.ht">
+	Require all denied
+</FilesMatch>
+
+# These headers are compatible with the server-rendered application and its
+# same-origin frames/assets.
+<IfModule mod_headers.c>
+	Header always set X-Content-Type-Options "nosniff"
+	Header always set X-Frame-Options "SAMEORIGIN"
+	Header always set Referrer-Policy "strict-origin-when-cross-origin"
+	Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com; font-src 'self' fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'self';"
+	# Suppress PHP version disclosure. Requires expose_php = Off in php.ini
+	# for the X-Powered-By header to be absent before this point; these
+	# directives catch any case where the header was added by PHP or Apache.
+	Header unset X-Powered-By
+	Header always unset X-Powered-By
+</IfModule>
+
+# Avoid leaking PHP paths, SQL details, and stack traces to visitors. PHP
+# logging remains enabled in Apache/PHP's configured server log.
+<IfModule mod_php.c>
+	php_flag display_errors Off
+	php_flag display_startup_errors Off
+	php_flag log_errors On
+</IfModule>
+
+# Keep backend handlers, includes, configuration, tests, and utilities on their
+# filesystem paths; they are not public page routes.
+RewriteRule ^(?:includes|config|database|scratch|tests|private_uploads|uploads)(?:/|$) - [F,L,NC]
+
+# Redirect retired student/enroll to student/dashboard
+RewriteRule ^student/enroll(?:\.php)?/?$ student/dashboard [R=302,L,NC]
+
+# Redirect retired teacher/gradebook to teacher/lms_grades
+RewriteRule ^teacher/gradebook(?:\.php)?/?$ teacher/lms_grades [R=302,L,NC,QSA]
+
+# Redirect direct GET/HEAD page.php requests to the extensionless page URL.
+# THE_REQUEST prevents this from firing after the internal clean-URL rewrite below.
+# Restricting to GET/HEAD prevents POST requests (e.g. file uploads, forms) from being redirected.
+# Capturing the path from %{REQUEST_URI} ensures the redirect target begins with a '/' (absolute URL path),
+# preventing Apache on Windows from leaking the physical drive letter/path (C:/...) without needing RewriteBase.
+RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$ [NC]
+RewriteCond %{THE_REQUEST} \s/+[^\s?]+\.php(?:[?\s]) [NC]
+RewriteCond %{REQUEST_URI} !/(?:includes|config|database|scratch|tests|private_uploads|uploads)(?:/|$) [NC]
+RewriteCond %{REQUEST_URI} ^(.*?)/([^/]+)\.php$ [NC]
+RewriteRule ^ %1/%2 [R=301,L,NE]
+
+# Internally map an extensionless request to its matching PHP page.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [END,QSA]

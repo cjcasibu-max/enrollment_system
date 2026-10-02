@@ -1,0 +1,40 @@
+# Composer vendor (top-level only, NOT includes/vendor)
+/vendor/
+
+# Environment secrets file (if used)
+# .env  <-- intentionally NOT ignored so classmates can see the config
+
+*.log
+
+.DS_Store
+
+Thumbs.db
+
+.vscode/
+.obsidian/
+.idea/
+
+uploads/student_documents/*
+!uploads/student_documents/.gitkeep
+
+# Database migration state flags
+config/.migrated*
+
+# Private uploads
+private_uploads/*
+!private_uploads/.gitkeep
+!private_uploads/student_documents/.gitkeep
+
+# Temporary and test artifacts
+*.tmp
+tests/manual/tmp_*
+tests/temp_chrome*
+
+# Scratch/debug query files generated during development
+test_query.php
+test_schema.php
+test_subjects_schema.php
+test_curr_query.php
+
+# Local Demo Credentials (DO NOT COMMIT OR DEPLOY)
+database/DEMO_CREDENTIALS.md

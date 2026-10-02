@@ -1,0 +1,9 @@
+# Deny direct browser access to uploaded files.
+# All document access must pass through actions/view_document.php with authentication and permission checks.
+Options -Indexes
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Deny from all
+</IfModule>
