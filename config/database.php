@@ -60,20 +60,6 @@ if (!isset($pdo)) {
     global $dbConnectionError;
     try {
         $pdo = new PDO($dsn, $username, $password, $options);
-
-        // On cloud/Render: register DB-backed session handler so sessions survive
-        // container restarts. Must run at global scope (before session_start).
-        $isLocalhost = in_array(
-            $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
-            ['127.0.0.1', '::1'],
-            true
-        );
-        if (!$isLocalhost && session_status() === PHP_SESSION_NONE) {
-            $sessionHandlerFile = __DIR__ . '/../includes/session_handler.php';
-            if (file_exists($sessionHandlerFile)) {
-                include_once $sessionHandlerFile;
-            }
-        }
     } catch (\PDOException $e) {
         $dbConnectionError = $e->getMessage();
         error_log("Database connection failed: " . $e->getMessage());
